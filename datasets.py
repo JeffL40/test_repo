@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import DataLoader, IterableDataset
 import random
 import numpy as np
+from constants import device
 
 class CopyTask(IterableDataset):
     def __init__(self, max_sequence, n_classes):

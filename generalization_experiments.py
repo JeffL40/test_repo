@@ -48,39 +48,40 @@ def main(argv=None):
     model.to(device)
     model.load_state_dict(torch.load(args.continue_from, map_location=device)['model_state'])
 
-    # Make the dataset and the model
-    test_set = CountTaskWithEOS(args.sequence_length)
-    test_loader = DataLoader(
-        test_set,
-        batch_size=args.batch_size,
-        pin_memory=device=="cuda"
-    )
-    if args.plot_hidden:
-        x, y, m = test_set.__next__() # x is 1d of length sequence_len
-        model.eval()
-        yhat = model(x.unsqueeze(1))
-        hdn = model.hidden_state # batch x seq x hdn
-        max_len = 10
-        print("Plotting on: ",x[:max_len])
-        plot_hidden_state_2d(hdn[0,:max_len,:].detach().numpy(), pca=True)
+    def generate_sequence(n, tok_a, tok_b, tok_EOS):
+        x = [tok_a]*n + [tok_b]*n + [tok_EOS]
+        y = x[1:] + [tok_a]
+        m = [1 if tok == tok_b else 0 for tok in x]
+        x = torch.tensor(x, dtype=torch.long)
+        y = torch.tensor(y, dtype=torch.long)
+        m = torch.tensor(m, dtype=torch.float64)
+        return x, y, m
+    def format_preds(x, y, preds, mask):
+        n = len(x)
+        n_dig = math.floor(math.log10(n)) + 1
+        nums = []
+        for p_dig in range(n_dig):
+            nums.append( "# |" + "".join([str((i//10**p_dig)%10) for i in range(n)]) + "\n")
+        nums = "".join(nums[::-1])
+        xs = "x |" + "".join([str(int(v)) for v in x]) + "\n"
+        ys = "y |" + "".join([elt if mask[i] == 1 else '?' for i, elt in enumerate([str(int(v)) for v in y])]) + "\n"
+        yh = "yh|" + "".join([elt if mask[i] == 1 else '?' for i, elt in enumerate([str(int(v)) for v in preds])]) + "\n"
+        return nums + xs + ys + yh
+    seq_len = 6
+    x, y, m = generate_sequence(seq_len, 1, 2, 0)
+    model.eval()
+    yhat = model(x.unsqueeze(1))
+    hdn = model.hidden_state # batch x seq x hdn
+    loss, acc = loss_fn(y.unsqueeze(1), yhat, m.unsqueeze(1))
+    print("Model loss: ", loss)
+    print("Model accuracy: ", acc)
+    print(format_preds(x, y, torch.argmax(yhat, dim=2)[0], m))
+    plot_hidden_state_2d(hdn[0].detach().numpy(), pca=True)
 
     """
-    > models_storage
-    >> rnn
-    >>> model_0
-    >>> model_1
-    >> lstm
-    >>> model_0
-    >> transformer
-    >>> model_0
-
-    Do a few things to test generalization.
-    For a given model `model`:
-        Generate some sequences (mix of easy and hard). For a sequence `x`,
-            1. Run `model` on `x`.
-            2. Check whether `model` got the answer completely right.
-            3. Plot the hidden state space mov't wrto. `x` to interpret
-            `model` solution and why it got the answer wrong/right
+    Run 
+        python generalization_experiments.py --model_type=rnn --d_model=3 --continue_from=model_storage/model_rnn
+    to test rnn generalization
     """
 if __name__ == "__main__":
     main()
