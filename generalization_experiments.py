@@ -61,8 +61,9 @@ def main(argv=None):
         return nums + xs + ys + yh
 
     acc_list = []
-    for stack_size in range(1, 65):
-        x, y, m = CountTaskWithEOS.get_seq(stack_size, 1, 2, 0, 3 * stack_size)
+    for stack_size in range(1, 64):
+        x, y, m = CountTaskWithEOS.get_seq(stack_size, 1, 2, 0, 128)
+        # print(x.shape, y.shape, m.shape)
         model.eval()
         yhat = model(x.unsqueeze(1))
         hdn = model.hidden_state # batch x seq x hdn
@@ -70,7 +71,7 @@ def main(argv=None):
         acc_list.append((stack_size, acc))
     plot_hidden_state_2d(np.array(acc_list), pca=False)
 
-    stack_size = 4 # Change this value to test longer / shorter sequences
+    stack_size = 36 # Change this value to test longer / shorter sequences
     x, y, m = CountTaskWithEOS.get_seq(stack_size, 1, 2, 0, 3 * stack_size)
     model.eval()
     yhat = model(x.unsqueeze(1))

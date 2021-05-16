@@ -24,7 +24,7 @@ from utils import add_optimizer_arguments, get_optimizer, \
     EpochStats, load_model, save_model, loss_fn, train, evaluate, add_auxiliary_arguments,\
     plot_hidden_state_2d, extract_hidden_state
 
-from datasets import CopyTask, CountTask, CountTaskWithEOS
+from datasets import CopyTask, CountTask, CountTaskWithEOS, SubjectVerbAgreement
 
 from modules import SequencePredictorRNN, SequencePredictorRecurrentTransformer
 
@@ -36,7 +36,7 @@ def main(argv=None):
     print("Running on {}".format(device))
 
     parser = argparse.ArgumentParser(
-        description="Train a transformer for a copy task"
+        description="Train a transformer for an agreement task"
     )
     add_optimizer_arguments(parser)
     add_transformer_arguments(parser)
@@ -48,8 +48,8 @@ def main(argv=None):
         for max_depth in range(1, 12):
           ii = 0
           while ii < 10:
-            train_set = CountTaskWithEOS(args.sequence_length, max_depth=max_depth)
-            test_set = CountTaskWithEOS(args.sequence_length, max_depth=max_depth)
+            train_set = SubjectVerbAgreement(args.sequence_length, max_depth=max_depth)
+            test_set = SubjectVerbAgreement(args.sequence_length, max_depth=max_depth)
             train_loader = DataLoader(
                 train_set,
                 batch_size=batch_size,
@@ -64,7 +64,7 @@ def main(argv=None):
             if model_type == "transformer":
                 d_model = 8
                 model = SequencePredictorRecurrentTransformer(
-                            d_model=d_model, n_classes=args.n_classes,
+                            d_model=d_model, n_classes=5,
                             sequence_length=args.sequence_length,
                             attention_type=args.attention_type,
                             n_layers=args.n_layers,
@@ -77,7 +77,7 @@ def main(argv=None):
             else:
                 d_model=3
                 model = SequencePredictorRNN(
-                            d_model=d_model, n_classes=args.n_classes,
+                            d_model=d_model, n_classes=5,
                             n_layers=args.n_layers,
                             dropout=args.dropout,
                             rnn_type=args.model_type
@@ -105,7 +105,7 @@ def main(argv=None):
                 print('Evaluating...')
                 acc = evaluate(model, test_loader, device, return_accuracy=True)
                 if (e % args.save_frequency) == 0:
-                    save_model("model_storage/model_" + model_type + "_depth_" + str(max_depth) + "_num_" + str(ii),
+                    save_model("model_storage/agreement_" + model_type + "_depth_" + str(max_depth) + "_num_" + str(ii),
                     model, optimizer, e)
                 lr_schedule.step()
                 if e == 30:
@@ -118,6 +118,6 @@ if __name__ == "__main__":
     """
     Run this:
 
-    python train_many.py --n_classes=3 --epochs=100
+    python train_many_agreement.py --n_classes=3 --epochs=100
 
     """

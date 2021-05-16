@@ -336,7 +336,7 @@ def extract_hidden_state(model, x, device):
     return model.hidden_state, y_hat
 
 import matplotlib.pyplot as plt
-def plot_hidden_state_2d(points, pca=False):
+def plot_hidden_state_2d(points, pca=False, arrow_size=0.000, annotate=True):
     """
     points is seq_len x hidden_size
     """
@@ -346,7 +346,6 @@ def plot_hidden_state_2d(points, pca=False):
     else:
         x = points[:,:2] # Truncate to first two dims
     plt.clf()
-    arrow_size = 0.01
     for i in range(len(points) - 1):
         px = points[i][0]
         py = points[i][1]
@@ -355,6 +354,7 @@ def plot_hidden_state_2d(points, pca=False):
         if i == 0:
             plt.plot(px, py, 'ro')
         plt.arrow(px, py, pdx, pdy, head_width=arrow_size, head_length=arrow_size)
-        plt.annotate(str(i+1), (px+pdx, py+pdy))
+        if annotate:
+            plt.annotate(str(i+1), (px+pdx, py+pdy))
     plt.show()
 

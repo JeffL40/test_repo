@@ -72,6 +72,7 @@ class SequencePredictorRecurrentTransformer(torch.nn.Module):
         # i_start is how far into the whole sequence you are in. Used for positional encoding.
         x = x.view(x.shape[0], -1)
         x = self.value_embedding(x).transpose(1, 0)
+        # print('xshape  here', x.shape)
         x = self.pos_embedding(x, i_start=i_start) # x is now batch_size x sequence_length x hdn_size
         y_hat = []
         self.hidden_state = []
