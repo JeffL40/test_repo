@@ -19,7 +19,13 @@ from datasets import CopyTask, CountTask, CountTaskWithEOS
 
 from modules import SequencePredictorRNN, SequencePredictorRecurrentTransformer
 
-from constants import device
+from constants import device, running_on_colab
+
+if running_on_colab:
+    extra_paths = ['', '/content', '/env/python', '/usr/lib/python37.zip', '/usr/lib/python3.7', '/content/drive/My Drive/final_project_material', '/usr/lib/python3.7/lib-dynload', '/usr/local/lib/python3.7/dist-packages', '/usr/lib/python3/dist-packages', '/usr/local/lib/python3.7/dist-packages/IPython/extensions', '/root/.ipython']
+    for p in extra_paths:
+        if p not in sys.path:
+            sys.path.append(p)
 
 def main(argv=None):
     # Choose a device and move everything there
@@ -91,12 +97,15 @@ def main(argv=None):
         lr_schedule.step()
     if args.plot_hidden:
         x, y, m = test_set.__next__() # x is 1d of length sequence_len
+        x.to(device)
+        y.to(device)
+        m.to(device)
         model.eval()
-        yhat = model(x.unsqueeze(1))
+        yhat = model(x.unsqueeze(1).to(device))
         hdn = model.hidden_state # batch x seq x hdn
         max_len = 10
         print("Plotting on: ",x[:max_len])
-        plot_hidden_state_2d(hdn[0,:max_len,:].detach().numpy(), pca=True)
+        plot_hidden_state_2d(hdn[0,:max_len,:].detach().cpu().numpy(), pca=True)
 if __name__ == "__main__":
     main()
     """

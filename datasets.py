@@ -2,7 +2,9 @@ import torch
 from torch.utils.data import DataLoader, IterableDataset
 import random
 import numpy as np
+import math
 from constants import device
+from scipy.stats import truncnorm
 
 class CopyTask(IterableDataset):
     def __init__(self, max_sequence, n_classes):
@@ -59,10 +61,44 @@ class CountTask(IterableDataset):
         mask = torch.tensor(mask, dtype=torch.float64)
         return x, y, mask
 
+def get_truncated_normal(mean=0, sd=1, low=0, upp=10):
+    # From https://stackoverflow.com/questions/36894191/
+    # how-to-get-a-normal-distribution-within-a-range-in-numpy/44308018
+    return truncnorm( (low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
+def normal_gen(max_depth):
+    assert max_depth >= 1 and max_depth % 1 == 0
+    gen = get_truncated_normal(mean=0, sd=max_depth/2, low=-max_depth, upp=max_depth)
+    while True:
+        v = math.floor(abs(gen.rvs())) + 1
+        while v > max_depth:
+            v = math.floor(abs(gen.rvs())) + 1
+        yield v # outputs a number from 1 to max_depth, inclusive
+
 class CountTaskWithEOS(IterableDataset):
-    def __init__(self, max_sequence, max_depth=12):
+    @staticmethod
+    def get_seq(n, tok_a, tok_b, tok_EOS, max_sequence=None):
+        if max_sequence is None:
+            max_sequence = 2 * n + 1
+        assert 2 * n + 1 <= max_sequence
+        x = []
+        for _ in range(n):
+            x.append(tok_a)
+        for _ in range(n):
+            x.append(tok_b)
+        for _ in range(max_sequence - len(x)):
+            x.append(tok_EOS)
+        y = x[1:]
+        y.append(tok_EOS)
+        mask = [1 if x[i] == tok_b else 0 for i in range(len(x))]
+        x = torch.tensor(x, dtype=torch.long)
+        y = torch.tensor(y, dtype=torch.long)
+        mask = torch.tensor(mask, dtype=torch.float64)
+        return x, y, mask
+
+    def __init__(self, max_sequence, max_depth=12): # max_depth inclusive
         self.max_sequence = max_sequence
         self.max_depth = max_depth
+        self.gen = normal_gen(min(max_depth, (max_sequence - 1) // 2))
 
     def __iter__(self):
         return self
@@ -71,43 +107,20 @@ class CountTaskWithEOS(IterableDataset):
         tok_EOS = 0
         tok_a = 1
         tok_b = 2
-        
-        
-        """
-        Replace with exponential distribution?
-        """
-        lengths = random.choices(range(1,12), weights=(10, 6, 4, 3, 1, 1, 1, 1, 1, 1, 1), k=10)
+        return get_seq(next(self.gen), tok_a, tok_b, tok_EOS, self.max_sequence)
 
+class SubjectVerbAgreement(IterableDataset):
+    def __init__(self, max_sequence, max_depth=12): # max_depth inclusive
+        self.max_sequence = max_sequence
+        self.max_depth = max_depth
+        self.gen = normal_gen(min(max_depth, (max_sequence - 1) // 2))
 
+    def __iter__(self):
+        return self
 
-        x = []
-        for length in lengths:
-            if len(x) + length * 2 + 1 <= self.max_sequence:
-                for _ in range(length):
-                    x.append(tok_a)
-                for _ in range(length):
-                    x.append(tok_b)
-                x.append(tok_EOS)
-            else:
-                break
-        for _ in range(self.max_sequence - len(x)):
-            x.append(tok_EOS)
-        y = x[1:] + [tok_EOS]
-        mask = [1 if x[i] == tok_b else 0 for i in range(len(x))]
-        x = torch.tensor(x, dtype=torch.long)
-        y = torch.tensor(y, dtype=torch.long)
-        mask = torch.tensor(mask, dtype=torch.float64)
-        return x, y, mask
+    def __next__(self):
+        pass
 
 
 if __name__ == "__main__":
-    # gen = np.random.default_rng()
-    # print(gen)
-    # for _, x in zip(range(10), gen):
-    #     print(x)
-    # print(np.floor(abs(gen.normal(1, 6, 6)-1)+1))
-    c = CountTaskWithEOS(128)
-    c.__next__()
-    # gen = normal_int_gen(5)
-    # print(next(gen))
     pass

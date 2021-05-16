@@ -59,7 +59,7 @@ symbols.extend(['a' + str(i) + '' for i in range(terminals_per_category)])
 indx2tok = { i : symbols[i] for i in range(0, len(symbols) ) }
 tok2indx = { symbols[i]:i  for i in range(0, len(symbols) ) }
 
-test_sent_str = [sent for sent in generate_grammar(0.3, 0.3, 5).generate(1)]
+test_sent_str = [sent for sent in generate_grammar(0.7, 0.7, 5).generate(1)]
 
 print(test_sent_str)
 
@@ -68,4 +68,4 @@ gen_samples = lambda str_corpus, max_len: [([tok2indx[i] for i in (sent+ " eos")
                                             [1]*(len(sent.split()))+[0]*(1+max_len-len(sent.split()))) 
                                             for sent in str_corpus]
 
-print(gen_samples(test_sent_str, 1))
+print(gen_samples(test_sent_str, 6))

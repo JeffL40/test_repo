@@ -48,14 +48,6 @@ def main(argv=None):
     model.to(device)
     model.load_state_dict(torch.load(args.continue_from, map_location=device)['model_state'])
 
-    def generate_sequence(n, tok_a, tok_b, tok_EOS):
-        x = [tok_a]*n + [tok_b]*n + [tok_EOS]
-        y = x[1:] + [tok_a]
-        m = [1 if tok == tok_b else 0 for tok in x]
-        x = torch.tensor(x, dtype=torch.long)
-        y = torch.tensor(y, dtype=torch.long)
-        m = torch.tensor(m, dtype=torch.float64)
-        return x, y, m
     def format_preds(x, y, preds, mask):
         n = len(x)
         n_dig = math.floor(math.log10(n)) + 1
@@ -67,8 +59,19 @@ def main(argv=None):
         ys = "y |" + "".join([elt if mask[i] == 1 else '?' for i, elt in enumerate([str(int(v)) for v in y])]) + "\n"
         yh = "yh|" + "".join([elt if mask[i] == 1 else '?' for i, elt in enumerate([str(int(v)) for v in preds])]) + "\n"
         return nums + xs + ys + yh
-    seq_len = 6
-    x, y, m = generate_sequence(seq_len, 1, 2, 0)
+
+    acc_list = []
+    for stack_size in range(1, 65):
+        x, y, m = CountTaskWithEOS.get_seq(stack_size, 1, 2, 0, 3 * stack_size)
+        model.eval()
+        yhat = model(x.unsqueeze(1))
+        hdn = model.hidden_state # batch x seq x hdn
+        loss, acc = loss_fn(y.unsqueeze(1), yhat, m.unsqueeze(1))
+        acc_list.append((stack_size, acc))
+    plot_hidden_state_2d(np.array(acc_list), pca=False)
+
+    stack_size = 4 # Change this value to test longer / shorter sequences
+    x, y, m = CountTaskWithEOS.get_seq(stack_size, 1, 2, 0, 3 * stack_size)
     model.eval()
     yhat = model(x.unsqueeze(1))
     hdn = model.hidden_state # batch x seq x hdn
@@ -76,7 +79,7 @@ def main(argv=None):
     print("Model loss: ", loss)
     print("Model accuracy: ", acc)
     print(format_preds(x, y, torch.argmax(yhat, dim=2)[0], m))
-    plot_hidden_state_2d(hdn[0].detach().numpy(), pca=True)
+    plot_hidden_state_2d(hdn[0].detach().cpu().numpy(), pca=True)
 
     """
     Run 
