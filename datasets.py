@@ -66,7 +66,7 @@ def get_truncated_normal(mean=0, sd=1, low=0, upp=10):
     # how-to-get-a-normal-distribution-within-a-range-in-numpy/44308018
     return truncnorm( (low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
 def normal_gen(max_depth):
-    assert max_depth >= 1 and max_depth % 1 == 0, f"Got max depth {max_depth}"
+    assert max_depth >= 1 and max_depth % 1 == 0
     gen = get_truncated_normal(mean=0, sd=max_depth/2, low=-max_depth, upp=max_depth)
     while True:
         v = math.floor(abs(gen.rvs())) + 1
@@ -110,6 +110,40 @@ class CountTaskWithEOS(IterableDataset):
         return CountTaskWithEOS.get_seq(next(self.gen), tok_a, tok_b, tok_EOS, self.max_sequence)
 
 class SubjectVerbAgreement(IterableDataset):
+
+    @staticmethod
+    def get_seq(n, max_sequence=None):
+        tok_EOS = 0
+        tok_a_s = 1
+        tok_a_p = 2
+        tok_b_s = 3
+        tok_b_p = 4
+
+        is_singular = []
+        for i in range(n):
+            if random.random() < 0.5:
+                is_singular.append(True)
+            else:
+                is_singular.append(False)
+
+        if max_sequence is None:
+            max_sequence = 2 * n + 1
+        assert 2 * n + 1 <= max_sequence
+        x = []
+        for i in range(n):
+            x.append(tok_a_s if is_singular[i] else tok_a_p)
+        for i in range(n):
+            x.append(tok_b_s if is_singular[n-1-i] else tok_b_p)
+        for _ in range(max_sequence - len(x)):
+            x.append(tok_EOS)
+        y = x[1:]
+        y.append(tok_EOS)
+        mask = [1 if (x[i] == tok_b_s or x[i] == tok_b_p) else 0 for i in range(len(x))]
+        x = torch.tensor(x, dtype=torch.long)
+        y = torch.tensor(y, dtype=torch.long)
+        mask = torch.tensor(mask, dtype=torch.float64)
+        return x, y, mask
+
     def __init__(self, max_sequence, max_depth=12): # max_depth inclusive
         self.max_sequence = max_sequence
         self.max_depth = max_depth
@@ -119,7 +153,7 @@ class SubjectVerbAgreement(IterableDataset):
         return self
 
     def __next__(self):
-        pass
+        return SubjectVerbAgreement.get_seq(next(self.gen), self.max_sequence)
 
 
 if __name__ == "__main__":
