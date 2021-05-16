@@ -66,7 +66,7 @@ def get_truncated_normal(mean=0, sd=1, low=0, upp=10):
     # how-to-get-a-normal-distribution-within-a-range-in-numpy/44308018
     return truncnorm( (low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
 def normal_gen(max_depth):
-    assert max_depth >= 1 and max_depth % 1 == 0
+    assert max_depth >= 1 and max_depth % 1 == 0, f"Got max depth {max_depth}"
     gen = get_truncated_normal(mean=0, sd=max_depth/2, low=-max_depth, upp=max_depth)
     while True:
         v = math.floor(abs(gen.rvs())) + 1
@@ -107,7 +107,7 @@ class CountTaskWithEOS(IterableDataset):
         tok_EOS = 0
         tok_a = 1
         tok_b = 2
-        return get_seq(next(self.gen), tok_a, tok_b, tok_EOS, self.max_sequence)
+        return CountTaskWithEOS.get_seq(next(self.gen), tok_a, tok_b, tok_EOS, self.max_sequence)
 
 class SubjectVerbAgreement(IterableDataset):
     def __init__(self, max_sequence, max_depth=12): # max_depth inclusive

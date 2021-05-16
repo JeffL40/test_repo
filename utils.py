@@ -303,7 +303,7 @@ def train(model, optimizer, dataloader, device):
         stats.progress()
     stats.finalize()
 
-def evaluate(model, dataloader, device):
+def evaluate(model, dataloader, device, return_accuracy=False):
     model.eval()
     total_loss = 0
     total_acc = 0
@@ -326,8 +326,10 @@ def evaluate(model, dataloader, device):
         "Accuracy:",
         total_acc/total_samples
     )
-
-    return total_loss/total_samples
+    if return_accuracy:
+        return total_acc/total_samples
+    else:
+        return total_loss/total_samples
 
 def extract_hidden_state(model, x, device):
     y_hat = model(x)
