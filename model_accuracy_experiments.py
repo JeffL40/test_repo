@@ -14,6 +14,7 @@ from utils import add_optimizer_arguments, get_optimizer, \
 from datasets import CopyTask, CountTask, CountTaskWithEOS
 from modules import SequencePredictorRNN, SequencePredictorRecurrentTransformer
 from constants import device
+import pickle
 
 def main(argv=None):
     print("Running on {}".format(device))
@@ -27,45 +28,51 @@ def main(argv=None):
     print("args:\n-----\n", args)
 
     data_points = []
-    for model_type in ['transformer', 'lstm', 'rnn']:
-        for max_trained_depth in range(1, 13):
+    for model_type in ['rnn', 'transformer', 'lstm',]:
+        for max_trained_depth in range(1, 12):
             for test_depth in range(1, 21):
-                if model_type == "transformer":
-                    model = SequencePredictorRecurrentTransformer(
-                                d_model=8, n_classes=3,
-                                sequence_length=args.sequence_length,
-                                attention_type=args.attention_type,
-                                n_layers=args.n_layers,
-                                n_heads=args.n_heads,
-                                d_query=args.d_model, # used to be d_query
-                                dropout=args.dropout,
-                                softmax_temp=None,
-                                attention_dropout=args.attention_dropout,
-                            )
-                else:
-                    model = SequencePredictorRNN(
-                                d_model=3, n_classes=3,
-                                n_layers=args.n_layers,
-                                dropout=args.dropout,
-                                rnn_type=args.model_type
-                            )
-                print(f"Created model:\n{model}")
-                model.to(device)
-                model.load_state_dict(torch.load("REPLACE WITH FNAME", map_location=device)['model_state'])
+                for ii in range(10):
+                    if model_type == "transformer":
+                        model = SequencePredictorRecurrentTransformer(
+                                    d_model=8, n_classes=3,
+                                    sequence_length=args.sequence_length,
+                                    attention_type=args.attention_type,
+                                    n_layers=args.n_layers,
+                                    n_heads=args.n_heads,
+                                    d_query=8, # used to be d_query
+                                    dropout=args.dropout,
+                                    softmax_temp=None,
+                                    attention_dropout=args.attention_dropout,
+                                )
+                    else:
+                        model = SequencePredictorRNN(
+                                    d_model=3, n_classes=3,
+                                    n_layers=args.n_layers,
+                                    dropout=args.dropout,
+                                    rnn_type=model_type
+                                )
+                    print(f"Created model:\n{model}")
+                    model.to(device)
+                    model_name = "models_from_colab/model_" + model_type + "_depth_" + str(max_trained_depth) + "_num_" + str(ii) + ".zip"
+                    model.load_state_dict(torch.load(model_name, map_location=device)['model_state'])
 
-                stack_size = test_depth
-                x, y, m = CountTaskWithEOS.get_seq(stack_size, 1, 2, 0, 3 * stack_size)
-                model.eval()
-                yhat = model(x.unsqueeze(1))
-                hdn = model.hidden_state # batch x seq x hdn
-                loss, acc = loss_fn(y.unsqueeze(1), yhat, m.unsqueeze(1))
-                data_points.append({'model_type': model_type, 'max_trained_depth': max_trained_depth,
-                                    'test_depth': test_depth, 'accuracy': acc})
+                    stack_size = test_depth
+                    x, y, m = CountTaskWithEOS.get_seq(stack_size, 1, 2, 0, 3 * stack_size)
+                    model.eval()
+                    yhat = model(x.unsqueeze(1))
+                    hdn = model.hidden_state # batch x seq x hdn
+                    loss, acc = loss_fn(y.unsqueeze(1), yhat, m.unsqueeze(1))
+                    data_points.append({'model_type': model_type, 'max_trained_depth': max_trained_depth,
+                                        'test_depth': test_depth, 'accuracy': acc})
     print("data points:")
     print(data_points)
 
+    with open("data_points.txt", "wb") as fp:
+        pickle.dump(data_points, fp)
+
+
     """
-    Run 
+    Run
         python generalization_experiments.py --model_type=rnn --d_model=3 --continue_from=model_storage/model_rnn
     to test rnn generalization
     """

@@ -86,7 +86,7 @@ def main(argv=None):
                             d_model=d_model, n_classes=5,
                             n_layers=args.n_layers,
                             dropout=args.dropout,
-                            rnn_type=args.model_type
+                            rnn_type=model_type
                         )
             print(f"Created model:\n{model}")
             model.to(device)

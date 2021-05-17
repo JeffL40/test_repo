@@ -157,4 +157,7 @@ class SubjectVerbAgreement(IterableDataset):
 
 
 if __name__ == "__main__":
+    max_depth = 3
+    ds = SubjectVerbAgreement(2*max_depth+1, max_depth)
+    print(ds.__next__())
     pass

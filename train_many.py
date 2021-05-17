@@ -36,15 +36,6 @@ batch_size = 64
 def main(argv=None):
     # Choose a device and move everything there
     print("Running on {}".format(device))
-
-    parser = argparse.ArgumentParser(
-        description="Train a transformer for a copy task"
-    )
-    add_optimizer_arguments(parser)
-    add_transformer_arguments(parser)
-    add_auxiliary_arguments(parser)
-    args = parser.parse_args(argv)
-    print("args:\n-----\n", args)
     # Make the dataset and the model
     for model_type in ['rnn', 'lstm', 'transformer']:
         for max_depth in range(1, 12):
@@ -71,10 +62,10 @@ def main(argv=None):
             if model_type == "transformer":
                 d_model = 8
                 model = SequencePredictorRecurrentTransformer(
-                            d_model=d_model, n_classes=args.n_classes,
-                            sequence_length=args.sequence_length,
-                            attention_type=args.attention_type,
-                            n_layers=args.n_layers,
+                            d_model=d_model, n_classes=3,
+                            sequence_length=128,
+                            attention_type="causal-linear",
+                            n_layers=1,
                             n_heads=args.n_heads,
                             d_query=d_model, # used to be d_query
                             dropout=args.dropout,
@@ -87,7 +78,7 @@ def main(argv=None):
                             d_model=d_model, n_classes=args.n_classes,
                             n_layers=args.n_layers,
                             dropout=args.dropout,
-                            rnn_type=args.model_type
+                            rnn_type=model_type
                         )
             print(f"Created model:\n{model}")
             model.to(device)

@@ -353,7 +353,7 @@ def plot_hidden_state_2d(points, pca=False, arrow_size=0.000, annotate=True):
         pdy = points[i+1][1] - py
         if i == 0:
             plt.plot(px, py, 'ro')
-        plt.arrow(px, py, pdx, pdy, head_width=arrow_size, head_length=arrow_size)
+        plt.arrow(px, py, pdx, pdy, head_width=arrow_size, head_length=arrow_size, width=min(0.001, 0.01 * math.sqrt(pdx**2+pdy**2)))
         if annotate:
             plt.annotate(str(i+1), (px+pdx, py+pdy))
     plt.show()

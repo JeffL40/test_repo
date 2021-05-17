@@ -11,7 +11,7 @@ from utils import add_optimizer_arguments, get_optimizer, \
     add_transformer_arguments, print_transformer_arguments, \
     EpochStats, load_model, save_model, loss_fn, train, evaluate, add_auxiliary_arguments,\
     plot_hidden_state_2d, extract_hidden_state
-from datasets import CopyTask, CountTask, CountTaskWithEOS
+from datasets import CopyTask, CountTask, CountTaskWithEOS, SubjectVerbAgreement
 from modules import SequencePredictorRNN, SequencePredictorRecurrentTransformer
 from constants import device
 
@@ -27,7 +27,7 @@ def main(argv=None):
     print("args:\n-----\n", args)
     if args.model_type == "transformer":
         model = SequencePredictorRecurrentTransformer(
-                    d_model=args.d_model, n_classes=args.n_classes,
+                    d_model=args.d_model, n_classes=5,
                     sequence_length=args.sequence_length,
                     attention_type=args.attention_type,
                     n_layers=args.n_layers,
@@ -39,7 +39,7 @@ def main(argv=None):
                 )
     else:
         model = SequencePredictorRNN(
-                    d_model=args.d_model, n_classes=args.n_classes,
+                    d_model=args.d_model, n_classes=5,
                     n_layers=args.n_layers,
                     dropout=args.dropout,
                     rnn_type=args.model_type
@@ -63,8 +63,8 @@ def main(argv=None):
 
     acc_list = []
     max_acc = None
-    for stack_size in range(1, 21):
-        x, y, m = CountTaskWithEOS.get_seq(stack_size, 1, 2, 0, 128)
+    for stack_size in range(1, 64):
+        x, y, m = SubjectVerbAgreement.get_seq(stack_size)
         # print(x.shape, y.shape, m.shape)
         model.eval()
         yhat = model(x.unsqueeze(1))
@@ -76,8 +76,8 @@ def main(argv=None):
     print("Highest perfect score at depth:", max_acc)
     plot_hidden_state_2d(np.array(acc_list), pca=False)
 
-    stack_size = 14 # Change this value to test longer / shorter sequences
-    x, y, m = CountTaskWithEOS.get_seq(stack_size, 1, 2, 0, 2 * stack_size + 1)
+    stack_size = 7 # Change this value to test longer / shorter sequences
+    x, y, m = SubjectVerbAgreement.get_seq(stack_size)
     model.eval()
     yhat = model(x.unsqueeze(1))
     hdn = model.hidden_state # batch x seq x hdn
