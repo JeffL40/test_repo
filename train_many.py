@@ -55,8 +55,8 @@ def main(argv=None):
             if os.path.isfile("/content/drive/My Drive/final_project_material/model_storage/model_" + model_type + "_depth_" + str(max_depth) + "_num_" + str(ii)):
               ii += 1
               continue
-            train_set = CountTaskWithEOS(max_depth*2+1, max_depth=max_depth)
-            test_set = CountTaskWithEOS(max_depth*2+1, max_depth=max_depth)
+            train_set = CountTaskWithEOS(2*max_depth+1, max_depth=max_depth)
+            test_set = CountTaskWithEOS(2*max_depth+1, max_depth=max_depth)
             train_loader = DataLoader(
                 train_set,
                 batch_size=batch_size,
@@ -111,13 +111,12 @@ def main(argv=None):
                 train(model, optimizer, train_loader, device)
                 print('Evaluating...')
                 acc = evaluate(model, test_loader, device, return_accuracy=True)
-                if (e % args.save_frequency) == 0:
-                    save_model("/content/drive/My Drive/final_project_material/model_storage/model_" + model_type + "_depth_" + str(max_depth) + "_num_" + str(ii),
-                    model, optimizer, e)
                 lr_schedule.step()
-                if e == 30:
+                if e == 40:
                     break
                 if acc >= 1:
+                    save_model("/content/drive/My Drive/final_project_material/model_storage/model_" + model_type + "_depth_" + str(max_depth) + "_num_" + str(ii),
+                    model, optimizer, e)
                     ii += 1
                     break
 if __name__ == "__main__":
