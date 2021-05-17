@@ -40,8 +40,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     print("args:\n-----\n", args)
     # Make the dataset and the model
-    train_set = CountTaskWithEOS(args.sequence_length)
-    test_set = CountTaskWithEOS(args.sequence_length)
+    max_depth=12
+    train_set = CountTaskWithEOS(max_depth*2+1, max_depth=max_depth)
+    test_set = CountTaskWithEOS(max_depth*2+1, max_depth=max_depth)
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,

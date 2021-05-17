@@ -46,6 +46,7 @@ def main(argv=None):
                 )
     print(f"Created model:\n{model}")
     model.to(device)
+    print("Number of epochs model was trained on: ",torch.load(args.continue_from, map_location=device)['epoch'])
     model.load_state_dict(torch.load(args.continue_from, map_location=device)['model_state'])
 
     def format_preds(x, y, preds, mask):
@@ -71,7 +72,7 @@ def main(argv=None):
         acc_list.append((stack_size, acc))
     plot_hidden_state_2d(np.array(acc_list), pca=False)
 
-    stack_size = 36 # Change this value to test longer / shorter sequences
+    stack_size = 24 # Change this value to test longer / shorter sequences
     x, y, m = CountTaskWithEOS.get_seq(stack_size, 1, 2, 0, 3 * stack_size)
     model.eval()
     yhat = model(x.unsqueeze(1))
@@ -84,8 +85,9 @@ def main(argv=None):
 
     """
     Run 
-        python generalization_experiments.py --model_type=rnn --d_model=3 --continue_from=model_storage/model_rnn
-    to test rnn generalization
+        rnn:    python generalization_experiments.py --model_type=rnn --d_model=3 --continue_from=model_storage/model_rnn
+        lstm:   python generalization_experiments.py --model_type=lstm --d_model=3 --continue_from=model_storage/model_lstm
+        transformer:   python generalization_experiments.py --model_type=transformer --d_model=8 --continue_from=model_storage/model_transformer
     """
 if __name__ == "__main__":
     main()

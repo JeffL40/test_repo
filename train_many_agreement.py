@@ -1,14 +1,15 @@
 import argparse
 import math
 import sys
+import os.path
+from os import path
 
 from constants import device, running_on_colab
 
-if running_on_colab:
-    extra_paths = ['', '/content', '/env/python', '/usr/lib/python37.zip', '/usr/lib/python3.7', '/content/drive/My Drive/final_project_material', '/usr/lib/python3.7/lib-dynload', '/usr/local/lib/python3.7/dist-packages', '/usr/lib/python3/dist-packages', '/usr/local/lib/python3.7/dist-packages/IPython/extensions', '/root/.ipython']
-    for p in extra_paths:
-        if p not in sys.path:
-            sys.path.append(p)
+extra_paths = ['', '/content', '/env/python', '/usr/lib/python37.zip', '/usr/lib/python3.7', '/content/drive/My Drive/final_project_material', '/usr/lib/python3.7/lib-dynload', '/usr/local/lib/python3.7/dist-packages', '/usr/lib/python3/dist-packages', '/usr/local/lib/python3.7/dist-packages/IPython/extensions', '/root/.ipython']
+for p in extra_paths:
+    if p not in sys.path:
+        sys.path.append(p)
 
 from collections import OrderedDict
 
@@ -48,6 +49,11 @@ def main(argv=None):
         for max_depth in range(1, 12):
           ii = 0
           while ii < 10:
+            print(max_depth, ii)
+            # skip existing models
+            if os.path.isfile("/content/drive/My Drive/final_project_material/agreement_models/model_" + model_type + "_depth_" + str(max_depth) + "_num_" + str(ii)):
+              ii += 1
+              continue
             train_set = SubjectVerbAgreement(args.sequence_length, max_depth=max_depth)
             test_set = SubjectVerbAgreement(args.sequence_length, max_depth=max_depth)
             train_loader = DataLoader(
@@ -62,7 +68,7 @@ def main(argv=None):
             )
 
             if model_type == "transformer":
-                d_model = 8
+                d_model = 12
                 model = SequencePredictorRecurrentTransformer(
                             d_model=d_model, n_classes=5,
                             sequence_length=args.sequence_length,
@@ -75,7 +81,7 @@ def main(argv=None):
                             attention_dropout=args.attention_dropout,
                         )
             else:
-                d_model=3
+                d_model=5
                 model = SequencePredictorRNN(
                             d_model=d_model, n_classes=5,
                             n_layers=args.n_layers,
@@ -105,12 +111,12 @@ def main(argv=None):
                 print('Evaluating...')
                 acc = evaluate(model, test_loader, device, return_accuracy=True)
                 if (e % args.save_frequency) == 0:
-                    save_model("model_storage/agreement_" + model_type + "_depth_" + str(max_depth) + "_num_" + str(ii),
+                    save_model("/content/drive/My Drive/final_project_material/agreement_models/model_" + model_type + "_depth_" + str(max_depth) + "_num_" + str(ii),
                     model, optimizer, e)
                 lr_schedule.step()
                 if e == 30:
                     break
-                if acc >= 1:
+                if acc >= 0.95:
                     ii += 1
                     break
 if __name__ == "__main__":

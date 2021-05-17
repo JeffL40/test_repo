@@ -1,6 +1,8 @@
 import argparse
 import math
 import sys
+import os.path
+from os import path
 
 from constants import device, running_on_colab
 
@@ -48,6 +50,11 @@ def main(argv=None):
         for max_depth in range(1, 12):
           ii = 0
           while ii < 10:
+            print(max_depth, ii)
+            # skip existing models
+            if os.path.isfile("/content/drive/My Drive/final_project_material/model_storage/model_" + model_type + "_depth_" + str(max_depth) + "_num_" + str(ii)):
+              ii += 1
+              continue
             train_set = CountTaskWithEOS(args.sequence_length, max_depth=max_depth)
             test_set = CountTaskWithEOS(args.sequence_length, max_depth=max_depth)
             train_loader = DataLoader(
@@ -105,7 +112,7 @@ def main(argv=None):
                 print('Evaluating...')
                 acc = evaluate(model, test_loader, device, return_accuracy=True)
                 if (e % args.save_frequency) == 0:
-                    save_model("model_storage/model_" + model_type + "_depth_" + str(max_depth) + "_num_" + str(ii),
+                    save_model("/content/drive/My Drive/final_project_material/model_storage/model_" + model_type + "_depth_" + str(max_depth) + "_num_" + str(ii),
                     model, optimizer, e)
                 lr_schedule.step()
                 if e == 30:
