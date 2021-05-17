@@ -36,6 +36,16 @@ batch_size = 64
 def main(argv=None):
     # Choose a device and move everything there
     print("Running on {}".format(device))
+
+    parser = argparse.ArgumentParser(
+        description="Train a transformer for a copy task"
+    )
+    add_optimizer_arguments(parser)
+    add_transformer_arguments(parser)
+    add_auxiliary_arguments(parser)
+    args = parser.parse_args(argv)
+    print("args:\n-----\n", args)
+
     # Make the dataset and the model
     for model_type in ['rnn', 'lstm', 'transformer']:
         for max_depth in range(1, 12):
