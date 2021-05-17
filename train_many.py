@@ -55,8 +55,8 @@ def main(argv=None):
             if os.path.isfile("/content/drive/My Drive/final_project_material/model_storage/model_" + model_type + "_depth_" + str(max_depth) + "_num_" + str(ii)):
               ii += 1
               continue
-            train_set = CountTaskWithEOS(args.sequence_length, max_depth=max_depth)
-            test_set = CountTaskWithEOS(args.sequence_length, max_depth=max_depth)
+            train_set = CountTaskWithEOS(max_depth*2+1, max_depth=max_depth)
+            test_set = CountTaskWithEOS(max_depth*2+1, max_depth=max_depth)
             train_loader = DataLoader(
                 train_set,
                 batch_size=batch_size,

@@ -54,8 +54,8 @@ def main(argv=None):
             if os.path.isfile("/content/drive/My Drive/final_project_material/agreement_models/model_" + model_type + "_depth_" + str(max_depth) + "_num_" + str(ii)):
               ii += 1
               continue
-            train_set = SubjectVerbAgreement(args.sequence_length, max_depth=max_depth)
-            test_set = SubjectVerbAgreement(args.sequence_length, max_depth=max_depth)
+            train_set = SubjectVerbAgreement(max_depth*2+1, max_depth=max_depth)
+            test_set = SubjectVerbAgreement(max_depth*2+1, max_depth=max_depth)
             train_loader = DataLoader(
                 train_set,
                 batch_size=batch_size,
